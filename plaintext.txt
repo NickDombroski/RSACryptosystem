@@ -1,0 +1,1 @@
+This is a sample file of plain text to see if encryption and decryption work!
