@@ -1,19 +1,19 @@
 # RSA.py
 # 
-# Encrypts a given plaintext input file using the RSA cryptosystem and a random key of the given bitlength
+# Encrypts a given plaintext file using the RSA cryptosystem and a random key of the given prime number bitlength
 # 
 # COMMAND LINE ARGS
 # (1) plainTextFileName - Name of the plaintext file to be encrypted
 # (2) cipherTextFile - Name of the file to be created containing the generated cipher
 # (3) decryptedTextFile - Name of the file to be created containing the decryption
-# (4) bitLength - Number of bits of n. Must be between 8 and 1024 inclusive
+# (4) bitLength - Number of bits of primes p and q. Must be between 8 and 2048 inclusive
 #
-# Generates two prime numbers, p and q, and multiplies them together to create an n of the given bit length.
-# Calculates phi(n) given p and q. Chooses a random valid e and calculates it's modular inverse using the pulverizer
-# algorithm. 
+# Generates two psuedo-random prime numbers, p and q, and multiplies them together to create n of approx. twice the bit length of the primes.
+# Calculates phi(n) given p and q. Chooses a random valid e and calculates d as the modular inverse of e mod phi(n) using the 
+# pulverizer algorithm (aka Extended Euclidean algorithm)
 #
 # OUTPUT FILES:
-# cipherTextFile - The encryption of each individual character (using it's Unicode point value). Each new line represents on character.
+# cipherTextFile - The encryption of each individual character (using it's Unicode point value). Each new line represents one character.
 # decryptedTextFile - The decryption of the cipher text. Assuming normal execution, contents should be identical to plainTextFile
 # keys.txt - Each key value used in the encryption/decryption process
 # 
@@ -26,6 +26,7 @@ import sys
 import math
 from math import sqrt
 import random
+import os
 
 def main():
     # Parse command line arguments
@@ -35,11 +36,13 @@ def main():
         raise Exception("Please supply a plain text file name")
     plainTextFileName = sys.argv[1]
 
+    directory = os.path.dirname(os.path.abspath(__file__))
+    plainTextPath = os.path.join(directory, plainTextFileName)
     try:
-        open(plainTextFileName,'r')
+        open(plainTextPath,'r')
     except FileNotFoundError:
         raise Exception("File does not exist")
-    plainTextFile = open(plainTextFileName,'r')
+    plainTextFile = open(plainTextPath,'r')
 
     try:
         sys.argv[2]
@@ -58,12 +61,12 @@ def main():
     except IndexError:
         raise Exception("Please supply a bitlength for n")
     bitLength = int(sys.argv[4])
-    if bitLength < 8 or bitLength > 1024:
-        raise Exception("Bit length must be between 8 and 1024 inclusive")
+    if bitLength < 8 or bitLength > 2048:
+        raise Exception("Bit length must be between 8 and 2048 inclusive")
     
     # Generate p and q
-    p = getRandomPrime(bitLength/2)
-    q = getRandomPrime(bitLength/2)
+    p = getRandomPrime(bitLength)
+    q = getRandomPrime(bitLength)
 
     # Calculate n and phi(n)
     n = p*q
@@ -90,7 +93,8 @@ def main():
 # @return - a random prime int of the given bit length
 def getRandomPrime(bitLength):
     while(True):
-        p = random.randint(pow(2,bitLength-1)+1,pow(2,bitLength)-1)
+        #p = random.randint(pow(2,bitLength-1)+1,pow(2,bitLength)-1)
+        p = random.getrandbits(int(bitLength))
         if isPrime(p):
             return p
 
@@ -113,7 +117,7 @@ def isPrime(n):
 # @return - a valid e value
 def getE(phi):
     while(True):
-        e = random.randint(1,int(sqrt(phi)))
+        e = random.randint(1,phi)
         if math.gcd(e,phi) == 1:
             return e
 
